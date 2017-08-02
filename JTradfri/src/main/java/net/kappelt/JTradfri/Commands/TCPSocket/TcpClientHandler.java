@@ -8,7 +8,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import net.kappelt.JTradfri.GWConnection;
 import net.kappelt.JTradfri.Tradfri.TradfriDevice;
 import net.kappelt.JTradfri.Tradfri.TradfriDeviceEventListener;
@@ -130,11 +129,11 @@ public class TcpClientHandler implements Runnable {
 		}
 		
 		if(command[1].equals("list")) {
-			//command "device::list" -> return an array of all devices
-			int[] deviceIDs = TradfriDevice.getDevices(gateway);
+			//command "device::list" -> return JSON of all device ids and their name
+			String deviceJSON = TradfriDevice.getDevices(gateway);
 			
-			outData.println("deviceList::" + Arrays.toString(deviceIDs));
-			System.out.println(threadIdentification() + "Send array " + Arrays.toString(deviceIDs));
+			outData.println("deviceList::" + deviceJSON);
+			System.out.println(threadIdentification() + "Send device-list: " + deviceJSON);
 		}else if(command[1].equals("update")) {
 			//command "device::update::<device-id>" -> perform a device update
 			if(command.length < 3) {
@@ -263,10 +262,10 @@ public class TcpClientHandler implements Runnable {
 		
 		if(command[1].equals("list")) {
 			//command "group::list" -> return an array of all groups
-			int[] groupIDs = TradfriGroup.getGroups(gateway);
+			String groupJSON = TradfriGroup.getGroups(gateway);
 			
-			outData.println("groupList::" + Arrays.toString(groupIDs));
-			System.out.println(threadIdentification() + "Send array " + Arrays.toString(groupIDs));
+			outData.println("groupList::" + groupJSON);
+			System.out.println(threadIdentification() + "Send group-list:  " + groupJSON);
 		}else if(command[1].equals("update")) {
 			//command "group::update::<group-id>" -> perform a group update
 			if(command.length < 3) {

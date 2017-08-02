@@ -106,24 +106,32 @@ public class TradfriDevice{
 		return true;
 	}
 	
-	public static int[] getDevices(GWConnection gateway) {
+	public static String getDevices(GWConnection gateway) {
 		CoapResponse resp = gateway.get("/15001");
 		if(!ResponseCode.isSuccess(resp.getCode())) {
 			System.out.println("Get devices failed!");
-			return new int[0];
+			return "";
 		}else {
 			try {
-				JSONArray json = new JSONArray(resp.getResponseText());
+				JSONArray deviceIDs = new JSONArray(resp.getResponseText());
+				JSONArray returnJSON = new JSONArray();
 				
-				int[] ids = new int[json.length()];
-				for(int i = 0; i < json.length(); i++) {
-					ids[i] = json.getInt(i);
+				for(int i = 0; i < deviceIDs.length(); i++) {
+					int currentID = deviceIDs.getInt(i);
+
+					gateway.device(currentID).update();
+					
+					JSONObject currentKey = new JSONObject();
+					currentKey.put("deviceid", gateway.device(currentID).getDeviceID());
+					currentKey.put("name", gateway.device(currentID).getName());
+					
+					returnJSON.put(currentKey);
 				}
 				
-				return ids;
+				return returnJSON.toString();
 			}catch(Exception e) {
 				System.out.println("Unexpected response: " + e.getMessage());
-				return new int[0];
+				return "";
 			}
 		}
 	}
@@ -216,10 +224,9 @@ public class TradfriDevice{
 	 */
 	public Boolean update() {
 		CoapResponse resp = gateway.get("/15001/" + Integer.toString(this.deviceID));
-		System.out.println("Code: " + resp.getCode());
 		
 		if(!ResponseCode.isSuccess(resp.getCode())) {
-			System.out.println("Device update failed!");
+			System.out.println("Device update for " + this.deviceID + " failed!");
 			return false;
 		}else {
 			return newInfoAvailable(resp.getResponseText());

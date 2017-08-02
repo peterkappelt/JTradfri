@@ -25,7 +25,7 @@ def getDate() {
     new Date().format('ddMMyyyy')
 }
 
-version='0.0.1-snapshot'
+version='0.0.2-snapshot'
 mainClassName='net.kappelt.JTradfri.JTradfri'
 
 

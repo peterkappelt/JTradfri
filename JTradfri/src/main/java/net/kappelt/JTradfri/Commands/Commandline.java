@@ -1,7 +1,5 @@
 package net.kappelt.JTradfri.Commands;
 
-import java.util.Arrays;
-
 import net.kappelt.JTradfri.GWConnection;
 import net.kappelt.JTradfri.Tradfri.TradfriDevice;
 import net.kappelt.JTradfri.Tradfri.TradfriGroup;
@@ -60,7 +58,7 @@ public class Commandline {
 			}else if(input[0].equals("debug:disable")){
 				gateway.debugDisable();
 			}else if (input[0].equals("device:list")) {
-				System.out.println(Arrays.toString(TradfriDevice.getDevices(gateway)));
+				System.out.println(TradfriDevice.getDevices(gateway));
 			}else if (input[0].equals("device:update")) {
 				if(input.length < 2) {
 					System.out.println("Please give device-id!");
@@ -133,7 +131,7 @@ public class Commandline {
 					}
 				}
 			}else if (input[0].equals("group:list")) {
-				System.out.println(Arrays.toString(TradfriGroup.getGroups(gateway)));
+				System.out.println(TradfriGroup.getGroups(gateway));
 			}else if (input[0].equals("group:update")) {
 				if(input.length < 2) {
 					System.out.println("Please give group-id!");

@@ -121,24 +121,32 @@ public class TradfriGroup {
 		return true;
 	}
 	
-	public static int[] getGroups(GWConnection gateway) {
+	public static String getGroups(GWConnection gateway) {
 		CoapResponse resp = gateway.get("/15004");
 		if(!ResponseCode.isSuccess(resp.getCode())) {
 			System.out.println("Get groups failed!");
-			return new int[0];
+			return "";
 		}else {
 			try {
-				JSONArray json = new JSONArray(resp.getResponseText());
+				JSONArray groupIDs = new JSONArray(resp.getResponseText());
+				JSONArray returnJSON = new JSONArray();
 				
-				int[] ids = new int[json.length()];
-				for(int i = 0; i < json.length(); i++) {
-					ids[i] = json.getInt(i);
+				for(int i = 0; i < groupIDs.length(); i++) {
+					int currentID = groupIDs.getInt(i);
+
+					gateway.group(currentID).update();
+					
+					JSONObject currentKey = new JSONObject();
+					currentKey.put("groupid", gateway.group(currentID).getGroupID());
+					currentKey.put("name", gateway.group(currentID).getName());
+					
+					returnJSON.put(currentKey);
 				}
 				
-				return ids;
+				return returnJSON.toString();
 			}catch(Exception e) {
 				System.out.println("Unexpected response: " + e.getMessage());
-				return new int[0];
+				return "";
 			}
 		}
 	}
@@ -280,10 +288,9 @@ public class TradfriGroup {
 	 */
 	public Boolean update() {
 		CoapResponse resp = gateway.get("/15004/" + Integer.toString(this.groupID));
-		System.out.println("Code: " + resp.getCode());
 		
 		if(!ResponseCode.isSuccess(resp.getCode())) {
-			System.out.println("Group update failed!");
+			System.out.println("Group update for " + this.groupID + "failed!");
 			return false;
 		}else {
 			return newInfoAvailable(resp.getResponseText());

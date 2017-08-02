@@ -39,7 +39,7 @@ public class JTradfri {
 			System.exit(-1);
 		}
 		
-		System.out.println("JTradfri 0.0.1-snapshot");
+		System.out.println("JTradfri 0.0.2-snapshot");
 		System.out.println();
 		
 		main.startThreadHandler();
