@@ -36,29 +36,6 @@ $VAR1 = {
           '9001' => 'TRADFRI group'				-> name
         };
 
- Moods are defined per Group
- An array of the mood ids of the group can be accessed under PATH_MOODS_ROOT/GROUP_ADDRESS
-
- the individual mood info is accessed under PATH_MOODS_ROOT/GROUP_ADDRESS/MOOD_ID
- {
-    "9001":"FOCUS",												-> user name
-    "9002":1494088485,												-> created at?
-    "9003":206399,													-> mood id
-    "9057":2,														
-    "9068":1,														-> 1 means that mood is predefined by IKEA ?
-    "15013":[														-> configs for individual member devices
-       {
-          "5850":1,												-> on/ off
-          "5851":254,												-> dimvalue
-          "9003":65537												-> member id
-       },
-       {
-          "5850":1,
-          "5851":254,
-          "9003":65538
-       }
-    ]
- }
 */
 
 /**
@@ -68,7 +45,15 @@ $VAR1 = {
 public class TradfriGroup {
 	private GWConnection gateway;
 	
+	/**
+	 * Listeners that are registered to be invoked for updates
+	 */
 	private ArrayList<TradfriGroupEventListener> updateListeners = new ArrayList<TradfriGroupEventListener>();
+	
+	/**
+	 * defined instances of moods
+	 */
+	Map<Integer, TradfriMood> moods = new HashMap<Integer, TradfriMood>();
 	
 	private int groupID;
 	
@@ -149,6 +134,20 @@ public class TradfriGroup {
 				return "";
 			}
 		}
+	}
+	
+	/**
+	 * get the mood-class by id
+	 * @param moodID
+	 * @return a TradfriModd instance
+	 */
+	public TradfriMood mood(int moodID) {
+		//put a new TradfriGroup to the groups-map if it doesn't exist yet
+		if(!moods.containsKey(moodID)) {
+			moods.put(moodID, new TradfriMood(this.gateway, this, moodID));
+		}
+		
+		return moods.get(moodID);
 	}
 	
 	/**
@@ -331,7 +330,7 @@ public class TradfriGroup {
 	/**
 	 * @return the mood
 	 */
-	public int getMood() {
+	public int getMoodId() {
 		return mood;
 	}
 

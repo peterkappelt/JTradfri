@@ -13,6 +13,7 @@ import net.kappelt.JTradfri.Tradfri.TradfriDevice;
 import net.kappelt.JTradfri.Tradfri.TradfriDeviceEventListener;
 import net.kappelt.JTradfri.Tradfri.TradfriGroup;
 import net.kappelt.JTradfri.Tradfri.TradfriGroupEventListener;
+import net.kappelt.JTradfri.Tradfri.TradfriMood;
 
 /**
  * @author peter
@@ -266,6 +267,25 @@ public class TcpClientHandler implements Runnable {
 			
 			outData.println("groupList::" + groupJSON);
 			System.out.println(threadIdentification() + "Send group-list:  " + groupJSON);
+		}else if(command[1].equals("moodlist")) {
+			//command "group::moodlist::<group-id>" -> get a list of moods that are defined for this group
+			if(command.length < 3) {
+				System.out.println(threadIdentification() + "No group-id specified!");
+				return;
+			}
+			
+			int groupID;
+			try {
+				groupID = Integer.parseInt(command[2]);
+			}catch(Exception e) {
+				System.out.println(threadIdentification() + "The group-id is not a number: " + e.getMessage());
+				return;
+			}
+			
+			String moodlist = TradfriMood.getMoods(gateway, gateway.group(groupID));
+			
+			outData.println("moodList::" + groupID + "::" + moodlist);
+			System.out.println(threadIdentification() + "Sent moodlist for group " + groupID + ": " + moodlist);
 		}else if(command[1].equals("update")) {
 			//command "group::update::<group-id>" -> perform a group update
 			if(command.length < 3) {
@@ -320,6 +340,33 @@ public class TcpClientHandler implements Runnable {
 			
 			outData.println("groupInfo::" + groupID + "::" + gateway.group(groupID).jsonInfo());
 			System.out.println(threadIdentification() + "Sent info for " + groupID);
+		}else if(command[1].equals("mood")) {
+			//command "group::mood::<group-id>::<mood-action>::<mood-id>" -> do something for a mood
+			if(command.length < 5) {
+				System.out.println(threadIdentification() + "group-id, mood-action or mood-id not specified!");
+				return;
+			}
+			
+			int groupID;
+			int moodID;
+			try {
+				groupID = Integer.parseInt(command[2]);
+				moodID = Integer.parseInt(command[4]);
+			}catch(Exception e) {
+				System.out.println(threadIdentification() + "The group-id or mood-id is not a number: " + e.getMessage());
+				return;
+			}
+			
+			if(command[3].equals("moodinfo")) {
+				TradfriMood mood = gateway.group(groupID).mood(moodID);
+				mood.update();
+				
+				outData.println("moodInfo::" + groupID + "::" + mood.jsonInfo());
+				System.out.println("Sent mood infor for mood " + moodID + "/ group " + groupID);
+			}else {
+				System.out.println(threadIdentification() + "Unknown mood-action " + command[3]);
+				return;
+			}
 		}else if(command[1].equals("set")) {
 			//command "group::set::<group-id>::..." -> set something for the group
 			if(command.length < 5) {

@@ -78,22 +78,26 @@ public class GWConnection {
 	public GWConnection() {
 		
 	}
+	
 	/**
 	 * creates a new instance of the gateway connection and opens it 
 	 * a fail while opening leads to abortion of the program
 	 * @param gatewayIP	IP or DNS of the gateway
-	 * @param gatewaySecret
+	 * @param gatewaySecret Secret, is on the bottom label on the gateway
 	 */
 	public GWConnection(String gatewayIP, String gatewaySecret) {		
 		connectionOpen(gatewayIP, gatewaySecret);
 	}
 	
-	
-	void connectionOpen(String gatewayIP, String gatewaySecret) {
+	/**
+	 * init the connection to the gateway
+	 * @param gatewayIP IP or DNS of the gateway
+	 * @param gatewaySecret Secret, is on the bottom label on the gateway
+	 * @param configFile path to a Properties-File that is writeable, can be null (than a new file in the current directory will be created)
+	 */
+	public void connectionOpen(String gatewayIP, String gatewaySecret) {
 		this.gatewayIP = gatewayIP;
 		this.gatewaySecret = gatewaySecret;
-		
-		client = new CoapClient();
 		
 		try {
 			// load key store
@@ -130,8 +134,15 @@ public class GWConnection {
 			System.exit(-1);
 		}
 		
-		//try to fix timeouts at user
-		client.setEndpoint(new CoapEndpoint(dtlsConnector, NetworkConfig.getStandard().set(Keys.ACK_TIMEOUT, 40000).setInt(Keys.MAX_RESOURCE_BODY_SIZE, 8192)));
+		//custom network config without a config file
+		NetworkConfig networkConfig = NetworkConfig.createStandardWithoutFile();
+		networkConfig.set(Keys.ACK_TIMEOUT, 40000);
+		networkConfig.setInt(Keys.MAX_RESOURCE_BODY_SIZE, 8192);
+		NetworkConfig.setStandard(networkConfig);
+		
+		client = new CoapClient();
+		
+		client.setEndpoint(new CoapEndpoint(dtlsConnector, networkConfig));
 		client.setTimeout(60000);
 		
 		//client.setEndpoint(new CoapEndpoint(dtlsConnector, NetworkConfig.getStandard()));

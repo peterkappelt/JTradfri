@@ -3,6 +3,7 @@ package net.kappelt.JTradfri.Commands;
 import net.kappelt.JTradfri.GWConnection;
 import net.kappelt.JTradfri.Tradfri.TradfriDevice;
 import net.kappelt.JTradfri.Tradfri.TradfriGroup;
+import net.kappelt.JTradfri.Tradfri.TradfriMood;
 
 public class Commandline {
 	
@@ -43,6 +44,8 @@ public class Commandline {
 									"										name <name> : The name of the device%n" +
 									"%n" +	
 									"group:list								list all available groups%n" +
+									"group:moodlist <group-id>				get a JSON string of moods that are defined for the group%n" +
+									"group:moodinfo <group-id> <mood-id>	get the info about a specific mood%n" +
 									"group:update <group-id>				manually read the group's info%n" +
 									"group:subscribe <group-id>				subscribe to a group so changes will be recognized automatically%n" +
 									"group:info <group-id>					get the buffered group data that is updated by a subscription or a update%n" +
@@ -132,6 +135,32 @@ public class Commandline {
 				}
 			}else if (input[0].equals("group:list")) {
 				System.out.println(TradfriGroup.getGroups(gateway));
+			}else if (input[0].equals("group:moodlist")) {
+				if(input.length < 2) {
+					System.out.println("Please give group-id!");
+				}else {
+					try {
+						int groupID = Integer.parseInt(input[1]);
+						System.out.println(TradfriMood.getMoods(gateway, gateway.group(groupID)));
+					}catch(Exception e) {
+						System.out.println("The given group-id doesn't seem to be valid: " + e.getMessage());
+					}
+				}
+			}else if (input[0].equals("group:moodinfo")) {
+				if(input.length < 3) {
+					System.out.println("Please give group-id and mood-id!");
+				}else {
+					try {
+						int groupID = Integer.parseInt(input[1]);
+						int moodID = Integer.parseInt(input[2]);
+						
+						TradfriMood mood = gateway.group(groupID).mood(moodID);
+						mood.update();
+						System.out.println(mood.jsonInfo());
+					}catch(Exception e) {
+						System.out.println("The given group-id or mood-id doesn't seem to be valid: " + e.getMessage());
+					}
+				}
 			}else if (input[0].equals("group:update")) {
 				if(input.length < 2) {
 					System.out.println("Please give group-id!");

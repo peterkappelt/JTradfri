@@ -21,11 +21,11 @@ public class JTradfri {
 	@Parameter(names = {"-g", "--gateway"}, description = "IP or DNS name of the gateway to connect to, without leading or trailing slash", required=true, help=true)
 	private String coapAddress;
 	
-	@Parameter(names = {"-d", "--debug"}, description = "Enable debug output", help = true)
-	private Boolean debug = false;
-	
 	@Parameter(names = {"-p", "--port"}, description = "Port for the TCP server, default 1505", help=true)
 	private int tcpPort = 1505;
+	
+	@Parameter(names = {"-d", "--debug"}, description = "Enable debug output", help = true)
+	private Boolean debug = false;
 	
 	public static void main(String[] args) {
 		JTradfri main = new JTradfri();
@@ -39,7 +39,7 @@ public class JTradfri {
 			System.exit(-1);
 		}
 		
-		System.out.println("JTradfri 0.0.2-snapshot");
+		System.out.println("JTradfri 0.0.3-snapshot");
 		System.out.println();
 		
 		main.startThreadHandler();
