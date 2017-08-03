@@ -340,6 +340,7 @@ public class TradfriGroup {
 	public void setMood(int mood) {		
 		JSONObject json = new JSONObject();
 		json.put("9039", mood);
+		json.put("5850", 1);
 		
 		gateway.putJSON("/15004/" + Integer.toString(this.groupID), json.toString());
 		
