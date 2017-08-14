@@ -24,6 +24,9 @@ public class JTradfri {
 	@Parameter(names = {"-p", "--port"}, description = "Port for the TCP server, default 1505", help=true)
 	private int tcpPort = 1505;
 	
+	@Parameter(names = {"-u", "--udpport"}, description = "Port for the UDP server, default to random port", help=true)
+	private int udpPort = 0;
+	
 	@Parameter(names = {"-d", "--debug"}, description = "Enable debug output", help = true)
 	private Boolean debug = false;
 	
@@ -51,7 +54,7 @@ public class JTradfri {
 			System.out.println();
 		}
 		
-		final GWConnection gateway = new GWConnection(coapAddress, coapPSK);
+		final GWConnection gateway = new GWConnection(coapAddress, coapPSK, udpPort);
 
 		Thread tcpServer = new Thread(new TcpServer(tcpPort, gateway));
 		tcpServer.start();

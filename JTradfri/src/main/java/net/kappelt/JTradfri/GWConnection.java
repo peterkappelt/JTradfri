@@ -63,6 +63,11 @@ public class GWConnection {
 	private String gatewaySecret = "";
 	
 	/**
+	 * The UDP port for notifies
+	 */
+	private Integer udpPort = 0;
+	
+	/**
 	 * DTLS connector, in order to provide security features to CoAP-Classes
 	 */
 	private DTLSConnector dtlsConnector = null;
@@ -84,9 +89,10 @@ public class GWConnection {
 	 * a fail while opening leads to abortion of the program
 	 * @param gatewayIP	IP or DNS of the gateway
 	 * @param gatewaySecret Secret, is on the bottom label on the gateway
+	 * @param udpPort the port for the UDP notifys
 	 */
-	public GWConnection(String gatewayIP, String gatewaySecret) {		
-		connectionOpen(gatewayIP, gatewaySecret);
+	public GWConnection(String gatewayIP, String gatewaySecret, Integer udpPort) {		
+		connectionOpen(gatewayIP, gatewaySecret, udpPort);
 	}
 	
 	/**
@@ -95,9 +101,10 @@ public class GWConnection {
 	 * @param gatewaySecret Secret, is on the bottom label on the gateway
 	 * @param configFile path to a Properties-File that is writeable, can be null (than a new file in the current directory will be created)
 	 */
-	public void connectionOpen(String gatewayIP, String gatewaySecret) {
+	public void connectionOpen(String gatewayIP, String gatewaySecret, Integer udpPort) {
 		this.gatewayIP = gatewayIP;
 		this.gatewaySecret = gatewaySecret;
+		this.udpPort = udpPort;
 		
 		try {
 			// load key store
@@ -117,7 +124,7 @@ public class GWConnection {
 			trustedCertificates[0] = trustStore.getCertificate("root");
 
 			DtlsConnectorConfig.Builder builder = new DtlsConnectorConfig.Builder();
-			builder.setAddress(new InetSocketAddress(0));
+			builder.setAddress(new InetSocketAddress(this.udpPort));
 			builder.setPskStore(new StaticPskStore("Client_identity", this.gatewaySecret.getBytes()));
 			builder.setIdentity((PrivateKey)keyStore.getKey("client", KEY_STORE_PASSWORD.toCharArray()),
 					keyStore.getCertificateChain("client"), true);
