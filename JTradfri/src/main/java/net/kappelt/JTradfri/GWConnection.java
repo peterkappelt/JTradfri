@@ -13,12 +13,14 @@ import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.Random;
 
 import org.eclipse.californium.core.CaliforniumLogger;
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapHandler;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
+import org.eclipse.californium.core.coap.CoAP.ResponseCode;
 import org.eclipse.californium.core.network.CoapEndpoint;
 import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.californium.core.network.config.NetworkConfig.Keys;
@@ -26,6 +28,8 @@ import org.eclipse.californium.scandium.DTLSConnector;
 import org.eclipse.californium.scandium.ScandiumLogger;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.pskstore.StaticPskStore;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import net.kappelt.JTradfri.Tradfri.TradfriDevice;
 import net.kappelt.JTradfri.Tradfri.TradfriGroup;
@@ -106,6 +110,12 @@ public class GWConnection {
 		this.gatewaySecret = gatewaySecret;
 		this.udpPort = udpPort;
 		
+		String connectionSecret = "", connectionIdentity = "";
+		Map<String, String> connectionParams = this.getIdentityInformation(this.gatewaySecret);
+		
+		connectionSecret = connectionParams.get("psk");
+		connectionIdentity = connectionParams.get("identity");
+		
 		try {
 			// load key store
 			KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -125,7 +135,7 @@ public class GWConnection {
 
 			DtlsConnectorConfig.Builder builder = new DtlsConnectorConfig.Builder();
 			builder.setAddress(new InetSocketAddress(this.udpPort));
-			builder.setPskStore(new StaticPskStore("Client_identity", this.gatewaySecret.getBytes()));
+			builder.setPskStore(new StaticPskStore(connectionIdentity, connectionSecret.getBytes()));
 			builder.setIdentity((PrivateKey)keyStore.getKey("client", KEY_STORE_PASSWORD.toCharArray()),
 					keyStore.getCertificateChain("client"), true);
 			builder.setTrustStore(trustedCertificates);
@@ -157,6 +167,123 @@ public class GWConnection {
 		//after opening connection: fetch well known
 		System.out.println("[GWConnection] Fetching well-known...");
 		System.out.println("[GWConnection] " + this.get("/.well-known/core").getResponseText());
+	}
+	
+	/**
+	 * Since gateway-version 1.2.0042 there is a two-stage-authentication:
+	 * First, you've to connect with the PSK on the label in order to get a temporary, device-based key
+	 * You can now connect to the gateway with the temporary key and use it as known
+	 * @param labelPSK the PSK that is printed on the gateway
+	 * @param connectionIdentity this function will write the resulting indentity string into this variable
+	 * @param connectionPSK this function will write the psk to be used into this variable
+	 */
+	private Map<String, String> getIdentityInformation(String labelPSK) {
+		System.out.println("[GWConnection] Doing handshake to get connection keys/ parameters...");
+		
+		String connectionIdentity = "";
+		String connectionPSK = "";
+		
+		CoapClient handshake_client;
+		DTLSConnector handshake_dtlsConnector = null;
+		
+		try {
+			// load key store
+			KeyStore keyStore = KeyStore.getInstance("JKS");
+			InputStream in = getClass().getClassLoader().getResourceAsStream("certs/handshake_keyStore.jks");
+			keyStore.load(in, "endPass".toCharArray());
+			in.close();
+
+			// load trust store
+			KeyStore trustStore = KeyStore.getInstance("JKS");
+			in = getClass().getClassLoader().getResourceAsStream("certs/handshake_trustStore.jks");
+			trustStore.load(in, "rootPass".toCharArray());
+			in.close();
+
+			// You can load multiple certificates if needed
+			Certificate[] trustedCertificates = new Certificate[1];
+			trustedCertificates[0] = trustStore.getCertificate("root");
+
+			DtlsConnectorConfig.Builder builder = new DtlsConnectorConfig.Builder();
+			builder.setAddress(new InetSocketAddress(this.udpPort));
+			builder.setPskStore(new StaticPskStore("Client_identity", labelPSK.getBytes()));
+			builder.setIdentity((PrivateKey)keyStore.getKey("client", KEY_STORE_PASSWORD.toCharArray()),
+					keyStore.getCertificateChain("client"), true);
+			builder.setTrustStore(trustedCertificates);
+			
+			//try to fix timeouts at user
+			builder.setRetransmissionTimeout(50000);
+			
+			handshake_dtlsConnector = new DTLSConnector(builder.build());
+			
+		} catch (Exception e) {
+			System.err.println("[GWConnection] Error while initializing key store: ");
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		
+		//custom network config without a config file
+		NetworkConfig networkConfig = NetworkConfig.createStandardWithoutFile();
+		networkConfig.set(Keys.ACK_TIMEOUT, 40000);
+		networkConfig.setInt(Keys.MAX_RESOURCE_BODY_SIZE, 8192);
+		NetworkConfig.setStandard(networkConfig);
+		
+		handshake_client = new CoapClient();
+		
+		handshake_client.setEndpoint(new CoapEndpoint(handshake_dtlsConnector, networkConfig));
+		handshake_client.setTimeout(60000);
+		
+		//using random identity
+		connectionIdentity = "jtr_" + Integer.toHexString(new Random().nextInt(0xFFFFFF));
+		System.out.println("[GWConnection] Handshake: Using identity \"" + connectionIdentity + "\"");
+	
+		
+		CoapResponse resp = null;
+		try {
+			//construct an URI to check validity
+			@SuppressWarnings("unused")
+			URI temp = new URI("coaps://" + this.gatewayIP + "/15011/9063");
+			
+			handshake_client.setURI("coaps://" + this.gatewayIP + "/15011/9063");
+			resp = handshake_client.post("{\"9090\":\"" + connectionIdentity + "\"}", MediaTypeRegistry.APPLICATION_JSON);
+
+		} catch (URISyntaxException e) {
+			System.err.println("[GWConnection] Invalid URI in GWConnection.postJSON: " + e.getMessage());
+			System.exit(-1);
+		}
+		
+		if(!ResponseCode.isSuccess(resp.getCode())) {
+			System.out.println("[GWConnection] Handshake failed: " + resp.getCode());
+			System.exit(-2);
+		}else {
+			try {
+				JSONObject returnData = new JSONObject(resp.getResponseText());
+				
+				if(!returnData.has("9029")) {
+					System.out.println("[GWConnection] Handshake failed: Missing key 9029 in psk request");
+					System.exit(-2);
+				}
+				if(!returnData.has("9091")) {
+					System.out.println("[GWConnection] Handshake failed: Missing key 9091 in psk request");
+					System.exit(-2);
+				}
+				
+				System.out.println("[GWConnection] Tradfri gateway firmware version: " + returnData.getString("9029"));
+				System.out.println("[GWConnection] Got connection psk: " + returnData.getString("9091"));
+				
+				connectionPSK = returnData.getString("9091");
+			}catch(Exception e) {
+				System.out.println("[GWConnection] Handhsake - Unexpected response: " + e.getMessage());
+				System.exit(-2);
+			}
+		}
+		
+		handshake_dtlsConnector.destroy();
+		
+		Map<String, String> retData = new HashMap<>();
+		retData.put("psk", connectionPSK);
+		retData.put("identity", connectionIdentity);
+		
+		return retData;
 	}
 	
 	/**
@@ -290,4 +417,5 @@ public class GWConnection {
 
 		return response;
 	}
+
 }
