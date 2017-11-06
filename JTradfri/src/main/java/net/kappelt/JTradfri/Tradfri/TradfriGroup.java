@@ -382,9 +382,13 @@ public class TradfriGroup {
 		if(onoff < 0)
 			onoff = 0;
 		
-		JSONObject json = new JSONObject();
-		json.put("5850", onoff);
-		gateway.putJSON("/15004/" + Integer.toString(this.groupID), json.toString());
+		//JSONObject json = new JSONObject();
+		//json.put("5850", onoff);
+		//gateway.putJSON("/15004/" + Integer.toString(this.groupID), json.toString());
+		
+		for(Map.Entry<Integer, TradfriDevice> entry : memberDevices.entrySet()) {
+			entry.getValue().setOnoff(onoff);
+		}
 		
 		this.onoff = onoff;
 	}
@@ -405,10 +409,14 @@ public class TradfriGroup {
 		if(dimvalue > 254)
 			dimvalue = 254;
 		
-		JSONObject json = new JSONObject();
-		json.put("5851", dimvalue);
+		//JSONObject json = new JSONObject();
+		//json.put("5851", dimvalue);
 		
-		gateway.putJSON("/15004/" + Integer.toString(this.groupID), json.toString());
+		//gateway.putJSON("/15004/" + Integer.toString(this.groupID), json.toString());
+		
+		for(Map.Entry<Integer, TradfriDevice> entry : memberDevices.entrySet()) {
+			entry.getValue().setDimvalue(dimvalue);
+		}
 		
 		this.dimvalue = dimvalue;
 	}
