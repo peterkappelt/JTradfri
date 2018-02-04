@@ -16,10 +16,14 @@ import net.kappelt.JTradfri.GWConnection;
  */
 public class TcpServer implements Runnable{
 	private int port;
-	
 	private GWConnection gateway;
+	private InetAddress listenAddress;
 	
 	public TcpServer(int port, GWConnection gw) {
+		this(port, gw, InetAddress.getLoopbackAddress());
+	}
+	
+	public TcpServer(int port, GWConnection gw, InetAddress listenAddress) {
 		this.port = port;
 		this.gateway = gw;
 	}
@@ -33,7 +37,7 @@ public class TcpServer implements Runnable{
 		try {
 			//listen to localhost only
 			@SuppressWarnings("resource")
-			ServerSocket socket = new ServerSocket(port, 0, InetAddress.getLoopbackAddress());
+			ServerSocket socket = new ServerSocket(port, 0, listenAddress);
 			//ServerSocket socket = new ServerSocket(port);
 			System.out.println("[TcpServer] Binding of socket @ port " + port	+ " successfull.");
 			

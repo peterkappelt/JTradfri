@@ -25,7 +25,7 @@ def getDate() {
     new Date().format('ddMMyyyy')
 }
 
-version='0.0.5-snapshot'
+version='0.0.6-snapshot'
 mainClassName='net.kappelt.JTradfri.JTradfri'
 
 
@@ -54,11 +54,11 @@ dependencies {
 	
 
     // https://mvnrepository.com/artifact/org.eclipse.californium/californium-core
-	compile group: 'org.eclipse.californium', name: 'californium-core', version: '2.0.0-M4'
+	compile group: 'org.eclipse.californium', name: 'californium-core', version: '2.0.0-M5'
 	// https://mvnrepository.com/artifact/org.eclipse.californium/scandium
-	compile group: 'org.eclipse.californium', name: 'scandium', version: '2.0.0-M4'
+	compile group: 'org.eclipse.californium', name: 'scandium', version: '2.0.0-M5'
 	// https://mvnrepository.com/artifact/org.eclipse.californium/element-connector
-	compile group: 'org.eclipse.californium', name: 'element-connector', version: '2.0.0-M4'
+	compile group: 'org.eclipse.californium', name: 'element-connector', version: '2.0.0-M5'
 	
 	// https://mvnrepository.com/artifact/org.json/json
 	compile group: 'org.json', name: 'json', version: '20170516'

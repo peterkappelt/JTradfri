@@ -28,7 +28,6 @@ import org.eclipse.californium.scandium.DTLSConnector;
 import org.eclipse.californium.scandium.ScandiumLogger;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.pskstore.StaticPskStore;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import net.kappelt.JTradfri.Tradfri.TradfriDevice;
